@@ -15,7 +15,6 @@ import tempfile
 import astropy.units as u
 from astropy.utils import check_free_space_in_dir
 from astropy.utils.console import ProgressBarOrSpinner
-from astropy.extern import six
 from astropy.extern.six.moves import urllib
 
 # Package
@@ -73,7 +72,7 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
             # message to display when downloading file:
             dlmsg = "Downloading {0}".format(remote_url)
             with ProgressBarOrSpinner(size, dlmsg, file=progress_stream) as p:
-                with tempfile.NamedTemporaryFile(dir=cache_path) as f:
+                with tempfile.NamedTemporaryFile(dir=cache_path, delete=False) as f:
                     try:
                         bytes_read = 0
                         block = remote.read(block_size)
@@ -89,7 +88,7 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
                             os.remove(f.name)
                         raise
 
-            local_path = os.path.join(cache_path, )
+            local_path = os.path.join(cache_path, filename)
             shutil.move(f.name, local_path)
 
     except urllib.error.URLError as e:

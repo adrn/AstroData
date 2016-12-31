@@ -37,6 +37,29 @@ AUTHOR_EMAIL = metadata.get('author_email', '')
 LICENSE = metadata.get('license', 'unknown')
 URL = metadata.get('url', 'http://astropy.org')
 
+# Check for an ~/.astrodataconfig file
+default_repository_path = os.path.expanduser('~/astrodata/')
+astrodata_conf = ConfigParser()
+astrodata_config_path = os.path.expanduser('~/.astrodataconfig')
+astrodata_config_exists = os.path.exists(astrodata_config_path)
+if astrodata_config_exists:
+    # read repository path from config file
+    astrodata_conf.read([astrodata_config_path])
+    astrodata_metadata = dict(astrodata_conf.items('astrodata'))
+    repo_path = astrodata_metadata.get('repository_path', None)
+
+if not astrodata_config_exists or repo_path is None:
+    # read repository path from setup.cfg or use default
+    astrodata_metadata = dict(conf.items('astrodata'))
+    repo_path = astrodata_metadata.get('repository_path', default_repository_path)
+
+    astrodata_conf.add_section('astrodata')
+    astrodata_conf.set('astrodata', 'repository_path', repo_path)
+
+    # Writing our configuration file to 'example.cfg'
+    with open(astrodata_config_path, 'w') as configfile:
+        astrodata_conf.write(configfile)
+
 # Get the long description from the package's docstring
 __import__(PACKAGENAME)
 package = sys.modules[PACKAGENAME]

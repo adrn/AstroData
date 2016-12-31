@@ -14,11 +14,12 @@ from astropy.extern.six.moves import urllib
 from astropy.tests.helper import remote_data, pytest
 
 # Package
-from ..cache import cache
+from ..cache import Cache
 from ..download import download_file
 
 TESTURL = 'http://www.astropy.org'
-download_dir = cache.root
+with Cache() as cache:
+    download_dir = cache.root
 tmp_filename = 'test-delete'
 
 @remote_data

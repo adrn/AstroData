@@ -58,7 +58,7 @@ class Cache(object):
     def __exit__(self, *args):
         self.close()
 
-    def add_data(self, sub_path, url_or_path, local_name=None, **kwargs):
+    def add_data(self, sub_path, url_or_path, local_name=None, delete_source=False, **kwargs):
         """
         Add a data file to the cache.
 
@@ -76,6 +76,9 @@ class Cache(object):
         local_name : str (optional)
             The filename to save this file as locally. Default is to grab the
             basename of the remote URL.
+        delete_source : bool (optional)
+            If the source path is local, delete the source after copying to the cache
+            (default is ``False``).
         **kwargs
             All other keyword arguments are passed to `~astrodata.download.download_file`.
 
@@ -89,11 +92,21 @@ class Cache(object):
             if local_name is None:
                 local_name = os.path.basename(url_or_path)
             local_path = os.path.join(full_cache_path, local_name)
-            shutil.move(url_or_path, local_path)
+            shutil.copy2(url_or_path, local_path)
+
+            if delete_source:
+                os.unlink(url_or_path)
 
         else:
             from .download import download_file
-            local_path = download_file(url_or_path, full_cache_path, filename=local_name, **kwargs)
+            try:
+                local_path = download_file(url_or_path, full_cache_path, filename=local_name, **kwargs)
+            except ValueError as e:
+                if 'unknown url type' in str(e):
+                    raise ValueError('Input data source path does not exist: {}'
+                                     .format(url_or_path))
+                else:
+                    raise e
             local_name = os.path.basename(local_path)
 
         # get each path level as a list of names
@@ -111,10 +124,12 @@ class Cache(object):
         return local_path
 
     def check_state(self):
+        # TODO: return True if everything is ok
+        # TODO: return False if not, raise warnings
         pass
 
     @classmethod
-    def build(self, cache_spec_file):
+    def build_from_schema(self, schema_file):
         pass
 
 cache = Cache()

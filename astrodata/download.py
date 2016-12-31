@@ -13,16 +13,20 @@ import tempfile
 
 # Third party
 import astropy.units as u
-from astropy.utils import check_free_space_in_dir
+from astropy.utils.data import check_free_space_in_dir
 from astropy.utils.console import ProgressBarOrSpinner
 from astropy.extern.six.moves import urllib
 
 # Package
 from .path import cache
 
-def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
-                  show_progress=True, block_size=2**16):
+def download_file(remote_url, sub_path, filename=None, timeout=10.*u.second,
+                  show_progress=True, block_size=2**16, overwrite=False):
     """
+    This is a modified version of `~astropy.utils.data.download_file` that
+    allows the user to specify the cache path.
+
+    Accepts a URL, downloads and caches the result returning the local filename.
 
     Parameters
     ----------
@@ -36,17 +40,31 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
     timeout : `~astropy.units.Quantity` (optional)
         The timeout as an Astropy Quantity (default is 10 seconds).
     show_progress : bool (optional)
-        Display a progress bar during the download (default is `True`).
+        Display a progress bar during the download (default is ``True``).
     block_size : int (optional)
         The download block size (default is 64K, 2**16).
+    overwrite : bool (optional)
+        Overwrite file if it exists (default is ``False``).
+
+    Returns
+    -------
+    local_path : str
+        Returns the local path that the file was download to.
 
     """
 
-    timeout_s = timeout.to(u.seconds).value
+    timeout_s = timeout.to(u.second).value
     cache_path = os.path.join(cache.root, sub_path)
+    if not os.path.exists(cache_path):
+        os.makedirs(cache_path)
 
     if filename is None:
         filename = os.path.basename(remote_url)
+
+    local_path = os.path.join(cache_path, filename)
+
+    if os.path.exists(local_path) and not overwrite:
+        return local_path
 
     try:
         with contextlib.closing(urllib.request.urlopen(remote_url, timeout=timeout_s)) as remote:
@@ -78,7 +96,6 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
                         block = remote.read(block_size)
                         while block:
                             f.write(block)
-                            hash.update(block)
                             bytes_read += len(block)
                             p.update(bytes_read)
                             block = remote.read(block_size)
@@ -88,7 +105,6 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
                             os.remove(f.name)
                         raise
 
-            local_path = os.path.join(cache_path, filename)
             shutil.move(f.name, local_path)
 
     except urllib.error.URLError as e:
@@ -102,3 +118,5 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.seconds,
         # way, but for some reason in mysterious circumstances it doesn't. So
         # we'll just re-raise it here instead
         raise urllib.error.URLError(e)
+
+    return local_path

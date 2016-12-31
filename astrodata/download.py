@@ -17,10 +17,7 @@ from astropy.utils.data import check_free_space_in_dir
 from astropy.utils.console import ProgressBarOrSpinner
 from astropy.extern.six.moves import urllib
 
-# Package
-from .path import cache
-
-def download_file(remote_url, sub_path, filename=None, timeout=10.*u.second,
+def download_file(remote_url, cache_path, filename=None, timeout=10.*u.second,
                   show_progress=True, block_size=2**16, overwrite=False):
     """
     This is a modified version of `~astropy.utils.data.download_file` that
@@ -32,8 +29,8 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.second,
     ----------
     remote_url : str
         The URL of the file to download
-    sub_path : str
-        The sub-path, relative to the root astrodata cache, to save the file.
+    cache_path : str
+        The path to save the file.
     filename : str (optional)
         The filename to save this file as, locally. Default is to grab the
         basename of the remote URL.
@@ -54,7 +51,6 @@ def download_file(remote_url, sub_path, filename=None, timeout=10.*u.second,
     """
 
     timeout_s = timeout.to(u.second).value
-    cache_path = os.path.join(cache.root, sub_path)
     if not os.path.exists(cache_path):
         os.makedirs(cache_path)
 

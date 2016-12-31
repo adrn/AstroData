@@ -103,6 +103,10 @@ matrix:
         - python: 3.5
           env: MAIN_CMD='pycodestyle packagename --count' SETUP_CMD=''
 
+        # Remote data tests
+        - python: 3.5
+          env: SETUP_CMD='test --remote-data'
+
     allow_failures:
         # Do a PEP8 test with pycodestyle
         # (allow to fail unless your code completely compliant)
